@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import UserModal, {UserData} from "@/app/user/user-modal";
 
-interface User {
+export interface User {
     id: number;
     name: string;
     birthdate: string;
@@ -13,8 +14,7 @@ interface User {
     phoneNumbers: PhoneNumber[];
 }
 
-interface Address {
-    id: number;
+export interface Address {
     postalCode: string;
     country: string;
     city: string;
@@ -22,12 +22,34 @@ interface Address {
     number: string;
 }
 
-interface PhoneNumber {
-    id: number;
+export interface PhoneNumber {
     phoneNumber: string;
 }
 
 export default function UsersList() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleOpenModal = () => setIsModalOpen(true);
+    const handleCloseModal = () => setIsModalOpen(false);
+    const handleSaveUser = async (userData: UserData) => {
+        try {
+            const response = await fetch('http://127.0.0.1:8080/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+        } catch (error) {
+            console.error('Error saving user:', error);
+        }
+        handleCloseModal();
+    };
     const [users, setUsers] = useState<User[]>([]);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
@@ -50,6 +72,10 @@ export default function UsersList() {
 
     return (
         <div className="bg-black text-white p-4">
+            <button onClick={handleOpenModal} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Add New User
+            </button>
+            {isModalOpen && <UserModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveUser} />}
             <h2 className="text-xl font-bold text-center mb-4">Users List</h2>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-center text-gray-500">
