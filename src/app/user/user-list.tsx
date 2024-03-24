@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UserModal, {UserData} from "@/app/user/user-modal";
+import EditableCell from "@/app/utility/editable-cell";
 
 export interface User {
     id: number;
@@ -32,26 +33,51 @@ export default function UsersList() {
     const handleOpenModal = () => setIsModalOpen(true);
     const handleCloseModal = () => setIsModalOpen(false);
     const handleSaveUser = async (userData: UserData) => {
-        try {
-            const response = await fetch('http://127.0.0.1:8080/user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData),
-            });
-
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-
-        } catch (error) {
-            console.error('Error saving user:', error);
-        }
+        saveUser(userData)
         handleCloseModal();
     };
     const [users, setUsers] = useState<User[]>([]);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [editingRowId, setEditingRowId] = useState<number | null>(null);
+
+    const handleRowEdit = (userId: number) => {
+        setEditingRowId(userId);
+    };
+
+    const handleValueChange = (index: number, fieldName: string, newValue: string) => {
+        const updatedUsers = users.map((user, idx) => {
+            if (idx === index) {
+                return { ...user, [fieldName]: newValue };
+            }
+            return user;
+        });
+        setUsers(updatedUsers);
+    };
+
+    async function saveUser(userToUpdate: UserData) {
+        try {
+            const response = await fetch(`http://127.0.0.1:8080/user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userToUpdate),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update user data.');
+            }
+
+            setEditingRowId(null);
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
+    }
+
+    const handleSave = async (index: number) => {
+        const userToUpdate = users[index];
+        await saveUser(userToUpdate);
+    };
 
     useEffect(() => {
         fetch('http://127.0.0.1:8080/user')
@@ -78,10 +104,9 @@ export default function UsersList() {
             {isModalOpen && <UserModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveUser} />}
             <h2 className="text-xl font-bold text-center mb-4">Users List</h2>
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-center text-gray-500">
+                <table className="w-full table-fixed text-sm text-center text-gray-500">
                     <thead className="text-xs uppercase bg-gray-700 text-gray-400">
                     <tr>
-                        <th className="py-3 px-6">ID</th>
                         <th className="py-3 px-6">Name</th>
                         <th className="py-3 px-6">Birthdate</th>
                         <th className="py-3 px-6">Birth Place</th>
@@ -89,21 +114,41 @@ export default function UsersList() {
                         <th className="py-3 px-6">SSN</th>
                         <th className="py-3 px-6">TIN</th>
                         <th className="py-3 px-6">Email</th>
-                        <th className="py-3 px-6">Details</th>
+                        <th className="py-3 px-6">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {users.flatMap((user, userIndex) => [
-                        <tr key={`user-${user.id}`} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600 cursor-pointer" onClick={() => handleRowClick(user.id)}>
-                            <td className="py-4 px-6">{user.id}</td>
-                            <td className="py-4 px-6">{user.name}</td>
-                            <td className="py-4 px-6">{user.birthdate}</td>
-                            <td className="py-4 px-6">{user.birthPlace}</td>
-                            <td className="py-4 px-6">{user.mothersName}</td>
-                            <td className="py-4 px-6">{user.socialSecurityNumber}</td>
-                            <td className="py-4 px-6">{user.taxIdentificationNumber}</td>
-                            <td className="py-4 px-6">{user.emailAddress}</td>
-                            <td className="py-4 px-6 text-blue-500 hover:text-blue-400">Toggle Details</td>
+                        <tr key={`user-${user.id}`} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600 cursor-pointer" onDoubleClick={() => handleRowEdit(user.id)}>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.name}
+                                onChange={(newValue) => handleValueChange(userIndex, 'name', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.birthdate}
+                                              onChange={(newValue) => handleValueChange(userIndex, 'birthdate', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.birthPlace}
+                                              onChange={(newValue) => handleValueChange(userIndex, 'birthPlace', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.mothersName}
+                                              onChange={(newValue) => handleValueChange(userIndex, 'mothersName', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.socialSecurityNumber}
+                                              onChange={(newValue) => handleValueChange(userIndex, 'socialSecurityNumber', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.taxIdentificationNumber}
+                                                                    onChange={(newValue) => handleValueChange(userIndex, 'taxIdentificationNumber', newValue)}/></td>
+                            <td className="py-4 px-6">
+                                <EditableCell isEditing={editingRowId === user.id} value={user.emailAddress}
+                                              onChange={(newValue) => handleValueChange(userIndex, 'emailAddress', newValue)}/></td>
+                            <td className="py-4 px-6 text-blue-500 hover:text-blue-400">
+                                <button onClick={() => handleRowClick(user.id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    Details
+                                </button>
+                                {editingRowId === user.id && (
+                                    <button onClick={() => handleSave(userIndex)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mx-1 rounded">Save</button>
+                                )}
+                            </td>
                         </tr>,
                         expandedRows.has(user.id) ? (
                             <tr key={`details-${user.id}`} className="bg-gray-700 border-b border-gray-600">
