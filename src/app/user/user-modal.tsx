@@ -24,11 +24,7 @@ export interface UserData {
     phoneNumbers: PhoneNumber[];
 }
 
-export default function UserModal({
-                                      isOpen,
-                                      onClose,
-                                      onSave
-                                  }: {
+export default function UserModal({isOpen, onClose, onSave}: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (userData: UserData) => void;
@@ -75,20 +71,21 @@ export default function UserModal({
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
-            <div className="relative top-20 mx-auto p-5 border w-3/4 md:w-1/2 lg:w-1/3 shadow-lg rounded-md bg-white">
+            <div className="fixed top-0 p-5 border w-3/4 shadow-lg rounded-md bg-white overflow-y-auto max-h-screen">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <h3 className="text-lg text-gray-900">Add New User</h3>
+
                     {/* User Fields */}
                     <div className="flex flex-col space-y-2">
-                        <input className="text-black p-2 border rounded" type="text" name="name" placeholder="Name" value={userData.name} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="text" name="name" minLength={4} placeholder="Name" value={userData.name} onChange={(e) => handleInputChange(e, 'user')} />
                         <input className="text-black p-2 border rounded" type="date" name="birthdate" placeholder="Birthdate" value={userData.birthdate} onChange={(e) => handleInputChange(e, 'user')} />
-                        <input className="text-black p-2 border rounded" type="text" name="birthPlace" placeholder="Birth Place" value={userData.birthPlace} onChange={(e) => handleInputChange(e, 'user')} />
-                        <input className="text-black p-2 border rounded" type="text" name="mothersName" placeholder="Mother's name" value={userData.mothersName} onChange={(e) => handleInputChange(e, 'user')} />
-                        <input className="text-black p-2 border rounded" type="text" name="socialSecurityNumber" placeholder="SSN number" value={userData.socialSecurityNumber} onChange={(e) => handleInputChange(e, 'user')} />
-                        <input className="text-black p-2 border rounded" type="text" name="taxIdentificationNumber" placeholder="TIN number" value={userData.taxIdentificationNumber} onChange={(e) => handleInputChange(e, 'user')} />
-                        <input className="text-black p-2 border rounded" type="text" name="emailAddress" placeholder="Email address" value={userData.emailAddress} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="text" name="birthPlace" minLength={4} placeholder="Birth Place" value={userData.birthPlace} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="text" name="mothersName" minLength={4} placeholder="Mother's name" value={userData.mothersName} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="text" name="socialSecurityNumber" minLength={9} maxLength={9} placeholder="SSN number" value={userData.socialSecurityNumber} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="text" name="taxIdentificationNumber" minLength={10} maxLength={10} placeholder="TIN number" value={userData.taxIdentificationNumber} onChange={(e) => handleInputChange(e, 'user')} />
+                        <input className="text-black p-2 border rounded" type="email" name="emailAddress" placeholder="Email address" value={userData.emailAddress} onChange={(e) => handleInputChange(e, 'user')} />
                     </div>
-
+                    <hr/>
                     {/* Address Fields */}
                     {userData.addresses.map((address, index) => (
                         <div key={`address-${index}`} className="flex flex-col space-y-2">
@@ -99,7 +96,7 @@ export default function UserModal({
                             <input className="text-black p-2 border rounded" type="text" name="number" placeholder="Street number" value={address.number} onChange={(e) => handleInputChange(e, 'addresses', index)} />
                         </div>
                     ))}
-
+                    <hr/>
                     {/* Phone Number Fields */}
                     {userData.phoneNumbers.map((phone, index) => (
                         <div key={`phone-${index}`} className="flex flex-col space-y-2">
@@ -109,7 +106,7 @@ export default function UserModal({
 
                     <div className="flex justify-end space-x-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Cancel</button>
-                        <button type="submit" className="px-4            py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+                        <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
                     </div>
                     {/* Buttons for Adding More Addresses and Phone Numbers */}
                     <div className="flex justify-between mt-4">

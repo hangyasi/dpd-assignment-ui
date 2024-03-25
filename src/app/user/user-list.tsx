@@ -1,30 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import UserModal, {UserData} from "@/app/user/user-modal";
 import EditableCell from "@/app/utility/editable-cell";
+import {InformationCircleIcon, PencilIcon, TrashIcon} from "@heroicons/react/16/solid";
 
-export interface User {
+export interface User extends UserData {
     id: number;
-    name: string;
-    birthdate: string;
-    birthPlace: string;
-    mothersName: string;
-    socialSecurityNumber: string;
-    taxIdentificationNumber: string;
-    emailAddress: string;
-    addresses: Address[];
-    phoneNumbers: PhoneNumber[];
-}
-
-export interface Address {
-    postalCode: string;
-    country: string;
-    city: string;
-    street: string;
-    number: string;
-}
-
-export interface PhoneNumber {
-    phoneNumber: string;
 }
 
 export default function UsersList() {
@@ -41,7 +21,12 @@ export default function UsersList() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null);
 
     const handleRowEdit = (userId: number) => {
-        setEditingRowId(userId);
+        if (editingRowId === userId) {
+            setEditingRowId(null);
+        } else {
+            setEditingRowId(userId);
+        }
+
     };
 
     const handleValueChange = (index: number, fieldName: string, newValue: string) => {
@@ -69,6 +54,7 @@ export default function UsersList() {
             }
 
             setEditingRowId(null);
+            fetchUsers();
         } catch (error) {
             console.error('Error updating user:', error);
         }
@@ -77,13 +63,18 @@ export default function UsersList() {
     const handleSave = async (index: number) => {
         const userToUpdate = users[index];
         await saveUser(userToUpdate);
+
     };
 
-    useEffect(() => {
+    function fetchUsers() {
         fetch('http://127.0.0.1:8080/user')
             .then(response => response.json())
             .then(data => setUsers(data))
             .catch(error => console.error('Error fetching users:', error));
+    }
+
+    useEffect(() => {
+        fetchUsers();
     }, []);
 
     const handleRowClick = (userId: number) => {
@@ -94,6 +85,24 @@ export default function UsersList() {
             newExpandedRows.add(userId);
         }
         setExpandedRows(newExpandedRows);
+    };
+
+    const handleDelete = async (userId: number) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8080/user/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete the user.');
+            }
+            fetchUsers();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+        }
     };
 
     return (
@@ -142,17 +151,20 @@ export default function UsersList() {
                                 <EditableCell isEditing={editingRowId === user.id} value={user.emailAddress}
                                               onChange={(newValue) => handleValueChange(userIndex, 'emailAddress', newValue)}/></td>
                             <td className="py-4 px-6 text-blue-500 hover:text-blue-400">
-                                <button onClick={() => handleRowClick(user.id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Details
+                                <button onClick={() => handleRowClick(user.id)} className="group relative">
+                                    <InformationCircleIcon className="h-6 w-6 text-blue-500 hover:text-blue-600" />
+                                </button>
+                                <button onClick={() => handleDelete(user.id)} className="group relative">
+                                    <TrashIcon className="h-6 w-6 text-red-500 hover:text-red-600" />
                                 </button>
                                 {editingRowId === user.id && (
-                                    <button onClick={() => handleSave(userIndex)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mx-1 rounded">Save</button>
+                                    <button onClick={() => handleSave(userIndex)} className="group relative"><PencilIcon className="h-6 w-6 text-green-500 hover:text-green-600" /></button>
                                 )}
                             </td>
                         </tr>,
                         expandedRows.has(user.id) ? (
                             <tr key={`details-${user.id}`} className="bg-gray-700 border-b border-gray-600">
-                                <td colSpan={9} className="space-y-4 py-4 px-6">
+                                <td colSpan={8} className="space-y-4 py-4 px-6">
                                     <div className="text-left">
                                         <h3 className="text-lg font-semibold text-gray-400">Addresses</h3>
                                         {user.addresses.map((address, index) => (
